@@ -139,7 +139,7 @@ static int read_line(char *line, int max_len)
  * @return  -1  単語の配列がオーバーフロー
  *          単語数（>= 0） 分割した単語数
  *----------------------------------------------------------------------*/
-int split_words(char *line, char *words[], int words_len)
+static int split_words(char *line, char *words[], int words_len)
 {
     int cnt;
     char *start;
