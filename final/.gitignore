@@ -1,8 +1,0 @@
-*~
-.unittest-gtest
-.waf-*
-*.pyc
-.lock-waf*
-build
-*.o
-.pc/
