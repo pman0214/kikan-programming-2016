@@ -26,8 +26,8 @@
 /*======================================================================
  * definitions, macros
  *======================================================================*/
-#define MAX_HEIGHT      1024
-#define MAX_WIDTH       768
+#define MAX_WIDTH       1024
+#define MAX_HEIGHT      768
 #define MAX_DEPTH       255
 
 /*======================================================================
@@ -56,8 +56,8 @@ typedef struct opr_strct
  */
 typedef struct img_info_strct
 {
-    int height;
     int width;
+    int height;
     int depth;
 } img_info_t;
 
@@ -125,12 +125,12 @@ int main(int argc, char *argv[])
         return ret;
     }
     /* check image size and depth */
-    if ( (in_img.height > MAX_HEIGHT) ||
-         (in_img.width  > MAX_WIDTH) ||
+    if ( (in_img.width  > MAX_WIDTH) ||
+         (in_img.height > MAX_HEIGHT) ||
          (in_img.depth  > MAX_DEPTH) )
     {
         T_M(T_E, 0x80010200, "Image size %dx%d, depth=%d is over range.\n",
-            in_img.height, in_img.width, in_img.depth);
+            in_img.width, in_img.height, in_img.depth);
         global_deinit(&opr);
         return 0x80010200;
     }
@@ -349,8 +349,8 @@ static int load_img_info(FILE *imgfile, img_info_t *info)
         return 0xc0050280;
     }
     /* retrieve image size */
-    info->height = (int)strtol(sizes[0], NULL, 10);
-    info->width  = (int)strtol(sizes[1], NULL, 10);
+    info->width  = (int)strtol(sizes[0], NULL, 10);
+    info->height = (int)strtol(sizes[1], NULL, 10);
 
     /*------------------------------*/
     /* retrieve next line to derive depth */
@@ -367,7 +367,7 @@ static int load_img_info(FILE *imgfile, img_info_t *info)
     info->depth = (int)strtol(buf, NULL, 10);
 
     T_M(T_D1, 0x40050f00, "Image size=%dx%d, depth=%d\n",
-        info->height, info->width, info->depth);
+        info->width, info->height, info->depth);
 
     return 0;
 }
@@ -406,6 +406,7 @@ static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info)
     long max;
     int ret;
 
+    cnt = 0;
     max = info->height * info->width * 3;
     while (cnt < max)
     {
@@ -458,8 +459,27 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
 /*----------------------------------------------------------------------*/
 static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info)
 {
-    fputs("P6", opr->outfile);
+    long cnt;
+    long max;
+    int ret;
+
+    fputs("P6\n", opr->outfile);
     fprintf(opr->outfile, "%d %d\n%d\n", info->width, info->height, info->depth);
+
+    cnt = 0;
+    max = info->height * info->width * 3;
+    while (cnt < max)
+    {
+        /* write 3-byte (RGB-byte) blocks */
+        ret = fwrite(buf+cnt, 1, info->width*3, opr->outfile);
+        if (ret <= 0)
+        {
+            T_M(T_E, 0xc0090100, "Cannot write to an outputfile %s: %s.\n",
+                opr->out_filename, strerror(errno));
+            return 0xc0090100;
+        }
+        cnt += ret;
+    }
 
     return 0;
 }
