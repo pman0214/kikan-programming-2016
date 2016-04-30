@@ -168,15 +168,14 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
         {
         case 'h':
             usage();
-            puts("exit with showing this help.");
             exit(0);
         case '?':               /* invalid option */
-            fprintf(stderr, "invalid option %c.\n", optopt);
+            fprintf(stderr, "Invalid option %c.\n", optopt);
             usage();
             return 0xc00101ee;
             break;
         default:                /* no route to here */
-            fprintf(stderr, "invalid option %c.\n", optopt);
+            fprintf(stderr, "Invalid option %c.\n", optopt);
             usage();
             return 0xc00101ff;
             break;
@@ -193,7 +192,7 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
         opr->out_filename = argv[optind+1];
         break;
     default:
-        fprintf(stderr, "invalid arguments.\n");
+        fprintf(stderr, "Invalid arguments.\n");
         usage();
         return 0xc0010700;
         break;
