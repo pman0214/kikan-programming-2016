@@ -62,14 +62,6 @@ typedef struct img_info_strct
 } img_info_t;
 
 /*======================================================================
- * global variables
- *======================================================================*/
-
-/*------------------------------
- * private
- *------------------------------*/
-
-/*======================================================================
  * prototype declarations for private functions
  *======================================================================*/
 static int arg_handler(int argc, char *argv[], opr_t *opr);
@@ -337,7 +329,7 @@ static int load_img_info(FILE *imgfile, img_info_t *info)
     }
 
     /*------------------------------*/
-    /* we now reach to a line describing the image size */
+    /* we now reach at a line describing the image size */
     T_M(T_D2, 0x40050200, "%s\n", buf);
     /* remove new line code */
     buf[strlen(buf)-1] = '\0';
@@ -366,7 +358,7 @@ static int load_img_info(FILE *imgfile, img_info_t *info)
     /* retrieve image depth */
     info->depth = (int)strtol(buf, NULL, 10);
 
-    T_M(T_D1, 0x40050f00, "Image size=%dx%d, depth=%d\n",
+    T_M(T_D2, 0x40050f00, "Image size=%dx%d, depth=%d\n",
         info->width, info->height, info->depth);
 
     return 0;
@@ -422,8 +414,8 @@ static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info)
         T_M(T_D2, 0x40070210, "cnt=%d, buf+cnt=%p\n",
             cnt, buf+cnt);
     }
-    T_D(T_D1, 0x40070300, buf, max);
-    T_M(T_D1, 0x40070310, "cnt=%d, buf=%p\n",
+    T_D(T_D2, 0x40070300, buf, max);
+    T_M(T_D1, 0x40070310, "read  cnt=%d, buf=%p\n",
         cnt, buf);
 
     return 0;
@@ -437,6 +429,8 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
     long cnt;
     long max;
 
+    T_D(T_D2, 0x40080000, buf, info->height*info->width*3);
+
     max = info->height * info->width * 3;
     for (cnt=0; cnt < max; cnt+=3)
     {
@@ -446,12 +440,16 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
         y = 0.299 * pixel[0] +
             0.587 * pixel[1] +
             0.114 * pixel[2];
+        T_M(T_D2, 0x40080100+cnt, "r,g,b=%02x,%02x,%02x, y=%02x\n",
+            pixel[0], pixel[1], pixel[2], y);
 
         /* overwrite the original image with the gray scaled one */
         *(buf+cnt)   = y;
         *(buf+cnt+1) = y;
         *(buf+cnt+2) = y;
+        T_D(T_D2, 0x40080200+cnt, buf, info->height*info->width*3);
     }
+    T_D(T_D2, 0x4008f000, buf, info->height*info->width*3);
 
     return 0;
 }
@@ -459,27 +457,32 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
 /*----------------------------------------------------------------------*/
 static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info)
 {
-    long cnt;
-    long max;
+    int row;
+    int col;
     int ret;
 
     fputs("P6\n", opr->outfile);
     fprintf(opr->outfile, "%d %d\n%d\n", info->width, info->height, info->depth);
 
-    cnt = 0;
-    max = info->height * info->width * 3;
-    while (cnt < max)
+    int cnt = 0;
+    for (row=0; row < info->height; row++)
     {
-        /* write 3-byte (RGB-byte) blocks */
-        ret = fwrite(buf+cnt, 1, info->width*3, opr->outfile);
-        if (ret <= 0)
+        /* gray scale data has same RGB value,
+         * so we can reversely read each pixel */
+        for (col=info->width; col > 0; )
         {
-            T_M(T_E, 0xc0090100, "Cannot write to an outputfile %s: %s.\n",
-                opr->out_filename, strerror(errno));
-            return 0xc0090100;
+            col--;
+            ret = fwrite(buf+row*info->width*3+col*3, 1, 3, opr->outfile);
+            if (ret <= 0)
+            {
+                T_M(T_E, 0xc0090400, "Cannot write to an outputfile %s: %s.\n",
+                    opr->out_filename, strerror(errno));
+                return 0xc0090400;
+            }
+            cnt += ret;
         }
-        cnt += ret;
     }
+    T_M(T_D1, 0x40090f00, "write cnt=%d\n", cnt);
 
     return 0;
 }
