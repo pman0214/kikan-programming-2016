@@ -7,11 +7,9 @@
 
 /**
  * @file
- *      Main module.
+ *      PPM形式画像をグレースケール化して左右反転
  * @author
  *      Shigemi Ishida <ishida+devel@f.ait.kyushu-u.ac.jp>
- *
- * Convert a PPM image to the gray-scaled one.
  */
 
 #include <stdio.h>
@@ -19,9 +17,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-
-#include "tool.h"
-#include "trace.h"
+#include <ctype.h>
 
 /*======================================================================
  * definitions, macros
@@ -33,26 +29,22 @@
 /*======================================================================
  * typedefs, structures
  *======================================================================*/
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-
 /**
  * @struct
- *      operation parameters.
+ *      動作用パラメータ格納用
  */
 typedef struct opr_strct
 {
-    unsigned int trace_level;   /**< tracer output level */
-    char *in_filename;          /**< input filename */
-    char *out_filename;         /**< output filename */
+    char *in_filename;          /**< 入力ファイル名 */
+    char *out_filename;         /**< 出力ファイル名 */
 
-    FILE *infile;               /**< input file pointer */
-    FILE *outfile;              /**< output file pointer */
+    FILE *infile;               /**< 入力ファイルポインタ */
+    FILE *outfile;              /**< 出力ファイルポインタ */
 } opr_t;
 
 /**
  * @struct
- *      image info.
+ *      画像情報
  */
 typedef struct img_info_strct
 {
@@ -62,7 +54,7 @@ typedef struct img_info_strct
 } img_info_t;
 
 /*======================================================================
- * prototype declarations for private functions
+ * プロトタイプ宣言
  *======================================================================*/
 static int arg_handler(int argc, char *argv[], opr_t *opr);
 static int global_init(opr_t *opr);
@@ -73,31 +65,29 @@ static int split_words(char *line, char *words[], int words_len);
 static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info);
 static int gray_convert(unsigned char *buf, img_info_t *info);
 static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info);
+static int is_number(char *num_str);
 
 /*======================================================================
  * functions
  *======================================================================*/
 int main(int argc, char *argv[])
 {
-    opr_t opr;                  /* operation parameters */
-    int   ret;                  /* return value handler */
-    img_info_t in_img;          /* input image info */
-    unsigned char img_data[MAX_HEIGHT*MAX_WIDTH*3];
+    opr_t opr;                  /* 動作パラメータ */
+    int   ret;                  /* return値格納用 */
+    img_info_t in_img;          /* 入力画像情報 */
+    unsigned char img_data[MAX_HEIGHT*MAX_WIDTH*3]; /* 画像データ */
 
-    /* set a default trace level to ERROR */
-    T_init(T_E);
-
-    /* initialize data */
+    /* 初期化 */
     memset(&opr, 0, sizeof(opr));
-    memset(&in_img, 0, sizeof(in_img));
 
-    /* handling options, arguments */
+    /* オプションや引数の処理 */
     ret = arg_handler(argc, argv, &opr);
     if (ret < 0)
     {
         return ret;
     }
 
+    /* 初期化処理 */
     ret = global_init(&opr);
     if (ret < 0)
     {
@@ -105,29 +95,27 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    T_M(T_D2, 0x00010100, "finished initialization.\n");
-
     /*----------------------------------------------------------------------*/
 
-    /* load image info */
+    /* 入力画像情報を読み込み */
     ret = load_img_info(opr.infile, &in_img);
     if (ret < 0)
     {
         global_deinit(&opr);
         return ret;
     }
-    /* check image size and depth */
+    /* 画像サイズをチェック */
     if ( (in_img.width  > MAX_WIDTH) ||
          (in_img.height > MAX_HEIGHT) ||
          (in_img.depth  > MAX_DEPTH) )
     {
-        T_M(T_E, 0x80010200, "Image size %dx%d, depth=%d is over range.\n",
+        fprintf(stderr, "Image size %dx%d, depth=%d is over range.\n",
             in_img.width, in_img.height, in_img.depth);
         global_deinit(&opr);
         return 0x80010200;
     }
 
-    /* read image data */
+    /* 画像データ部の読み込み */
     ret = load_img(img_data, &opr, &in_img);
     if (ret < 0)
     {
@@ -135,7 +123,7 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /* convert to gray scaled image */
+    /* グレースケール化 */
     ret = gray_convert(img_data, &in_img);
     if (ret < 0)
     {
@@ -143,7 +131,7 @@ int main(int argc, char *argv[])
         return ret;
     }
 
-    /* save to an output file */
+    /* 左右反転してファイルに書き出し */
     ret = write_img_flipped(img_data, &opr, &in_img);
     if (ret < 0)
     {
@@ -154,8 +142,6 @@ int main(int argc, char *argv[])
     /*----------------------------------------------------------------------*/
 
     global_deinit(&opr);
-
-    T_M(T_D2, 0x0001ffff, "program completed.\n");
 
     return 0;
 }
@@ -168,11 +154,11 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
     int ret;
 
     /*------------------------------
-     * handling options
+     * オプションの処理
      *------------------------------*/
     for (;;)
     {
-        ret = getopt(argc, argv, "hd:");
+        ret = getopt(argc, argv, "h");
 
         if (ret < 0)
         {
@@ -182,28 +168,15 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
         {
         case 'h':
             usage();
-            T_M(T_D2, 0x400100ff, "exit with showing help.\n");
+            puts("exit with showing this help.");
             exit(0);
-        case 'd':
-            if (!is_number(optarg))
-            {
-                T_M(T_E, 0xc0010100, "invalid debug level parameter: %s.\n", optarg);
-                return 0xc0010100;
-            }
-            opr->trace_level = (unsigned int)strtol(optarg, NULL, 10);
-            ret = T_init(opr->trace_level);
-            if (ret < 0)
-            {
-                T_init(T_E);
-            }
-            break;
         case '?':               /* invalid option */
-            T_M(T_E, 0xc00101ee, "invalid option.\n", optopt);
+            fprintf(stderr, "invalid option %c.\n", optopt);
             usage();
             return 0xc00101ee;
             break;
         default:                /* no route to here */
-            T_M(T_E, 0xc00101ff, "invalid option.\n", optopt);
+            fprintf(stderr, "invalid option %c.\n", optopt);
             usage();
             return 0xc00101ff;
             break;
@@ -211,7 +184,7 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
     }
 
     /*------------------------------
-     * handling arguments
+     * 引数の処理
      *------------------------------*/
     switch (argc - optind)
     {
@@ -220,7 +193,7 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
         opr->out_filename = argv[optind+1];
         break;
     default:
-        T_M(T_E, 0xc0010500, "invalid arguments.\n");
+        fprintf(stderr, "invalid arguments.\n");
         usage();
         return 0xc0010700;
         break;
@@ -232,17 +205,17 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
 /*----------------------------------------------------------------------*/
 static int global_init(opr_t *opr)
 {
-    /* open input file */
+    /* 入力ファイルを開く */
     opr->infile = fopen(opr->in_filename, "rb");
     if (!opr->infile) {
-        T_M(T_E, 0xc0020100, "Cannot open input file: %s.\n", strerror(errno));
+        fprintf(stderr, "Cannot open input file: %s.\n", strerror(errno));
         return 0xc0020100;
     }
 
-    /* open output file */
+    /* 出力ファイルを開く */
     opr->outfile = fopen(opr->out_filename, "wb");
     if (!opr->infile) {
-        T_M(T_E, 0xc0020200, "Cannot open output file: %s.\n", strerror(errno));
+        fprintf(stderr, "Cannot open output file: %s.\n", strerror(errno));
         return 0xc0020200;
     }
 
@@ -270,15 +243,9 @@ static void global_deinit(opr_t *opr)
 /*----------------------------------------------------------------------*/
 static void usage(void)
 {
-    puts("Usage: final [-h] [-d <debug_level>] <in_file> <out_file>");
+    puts("Usage: final [-h] <in_file> <out_file>");
     puts("Options:");
     puts("  -h show this help and exit");
-    puts("  -d specify debug message level");
-    printf("    %d\tERROR (default)\n", T_E);
-    printf("    %d\tWARNING\n", T_W);
-    printf("    %d\tINFO\n", T_I);
-    printf("    %d\tDEBUG1\n", T_D1);
-    printf("    %d\tDEBUG2\n", T_D2);
 
     return;
 }
@@ -291,75 +258,82 @@ static int load_img_info(FILE *imgfile, img_info_t *info)
     char *sizes[2];
     int ret;
 
-    /* first line is "P6" */
+    /* 最初の行は「P6」 */
     pcRet = fgets(buf, sizeof(buf), imgfile);
     if (!pcRet)
     {
-        T_M(T_E, 0xc00500f0, "Cannot read from input file: %s", strerror(errno));
+        fprintf(stderr, "Cannot read from input file: %s.\n", strerror(errno));
         return 0xc00500f0;
     }
-    T_M(T_D2, 0x40050100, "%s", buf);
 
-    /* skip comments */
+    /* コメントを読み飛ばす */
     pcRet = fgets(buf, sizeof(buf), imgfile);
     if (!pcRet)
     {
-        T_M(T_E, 0xc00501f0, "Cannot read from input file");
+        fprintf(stderr, "Cannot read from input file: %s.\n", strerror(errno));
         return 0xc00501f0;
     }
-
     while (buf[0] == '#')
     {
-        T_M(T_D2, 0x40050101, "%s\n", buf);
-
-        /* read until the end of the line */
+        /* 行末まで読み飛ばす */
         while (buf[strlen(buf)-1] != '\n')
         {
             pcRet = fgets(buf, sizeof(buf), imgfile);
             if (!pcRet)
             {
-                T_M(T_E, 0xc00502f0, "Cannot read from input file: %s.\n", strerror(errno));
+                fprintf(stderr, "Cannot read from input file: %s.\n", strerror(errno));
                 return 0xc00502f0;
             }
-            T_M(T_D2, 0x40050102, "%s\n", buf);
         }
 
-        /* read next line */
+        /* 次の行を読んでおく */
         pcRet = fgets(buf, sizeof(buf), imgfile);
+        if (!pcRet)
+        {
+            fprintf(stderr, "Cannot read from input file: %s.\n", strerror(errno));
+            return 0xc00502f1;
+        }
     }
 
     /*------------------------------*/
-    /* we now reach at a line describing the image size */
-    T_M(T_D2, 0x40050200, "%s\n", buf);
-    /* remove new line code */
+    /* この時点で画像サイズを表す行に到達しているはず */
+    /* 行末の改行コードを削除 */
     buf[strlen(buf)-1] = '\0';
-    /* split with space */
+    /* スペースで分離 */
     ret = split_words(buf, sizes, 2);
+    /* 2個の値が書いてないときはフォーマットエラー */
     if (ret != 2)
     {
-        T_M(T_E, 0xc0050280, "Invalid image size description.\n");
+        fprintf(stderr, "Invalid image size description.\n");
         return 0xc0050280;
     }
-    /* retrieve image size */
+    /* 数字が書いてないときはフォーマットエラー */
+    if ( (!is_number(sizes[0])) || (!is_number(sizes[1])) )
+    {
+        fprintf(stderr, "Invalid image size description.\n");
+        return 0xc0050290;
+    }
+    /* 画像の幅と高さを取得 */
     info->width  = (int)strtol(sizes[0], NULL, 10);
     info->height = (int)strtol(sizes[1], NULL, 10);
 
     /*------------------------------*/
-    /* retrieve next line to derive depth */
+    /* depthも取得 */
     pcRet = fgets(buf, sizeof(buf), imgfile);
     if (!pcRet)
     {
-        T_M(T_E, 0xc0050301, "Cannot read from input file");
+        fprintf(stderr, "Cannot read from input file: %s.\n", strerror(errno));
         return 0xc0050301;
     }
-    /* remove new line code */
+    /* 行末の改行コードを削除 */
     buf[strlen(buf)-1] = '\0';
-
-    /* retrieve image depth */
+    if (!is_number(buf))
+    {
+        fprintf(stderr, "Invalid image depth description.\n");
+        return 0xc0050290;
+    }
+    /* depthを取得 */
     info->depth = (int)strtol(buf, NULL, 10);
-
-    T_M(T_D2, 0x40050f00, "Image size=%dx%d, depth=%d\n",
-        info->width, info->height, info->depth);
 
     return 0;
 }
@@ -402,21 +376,15 @@ static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info)
     max = info->height * info->width * 3;
     while (cnt < max)
     {
-        /* read 3-byte (RGB-byte) blocks */
+        /* 3バイト（RGBバイト）を読む */
         ret = fread(buf+cnt, 1, info->width*3, opr->infile);
         if (ret <= 0)
         {
-            T_M(T_E, 0xc0070100, "Invalid image file format.\n");
+            fprintf(stderr, "Invalid image file format.\n");
             return 0xc0070100;
         }
-        T_D(T_D2, 0x40070200, buf+cnt, info->width*3);
         cnt += ret;
-        T_M(T_D2, 0x40070210, "cnt=%d, buf+cnt=%p\n",
-            cnt, buf+cnt);
     }
-    T_D(T_D2, 0x40070300, buf, max);
-    T_M(T_D1, 0x40070310, "read  cnt=%d, buf=%p\n",
-        cnt, buf);
 
     return 0;
 }
@@ -429,27 +397,21 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
     long cnt;
     long max;
 
-    T_D(T_D2, 0x40080000, buf, info->height*info->width*3);
-
     max = info->height * info->width * 3;
     for (cnt=0; cnt < max; cnt+=3)
     {
-        /* read r, g, b */
+        /* r, g, bを読む */
         memcpy(pixel, buf+cnt, 3);
-        /* calculate Y = 0.299R + 0.587G + 0.114B  */
+        /* 輝度を計算 Y = 0.299R + 0.587G + 0.114B  */
         y = 0.299 * pixel[0] +
             0.587 * pixel[1] +
             0.114 * pixel[2];
-        T_M(T_D2, 0x40080100+cnt, "r,g,b=%02x,%02x,%02x, y=%02x\n",
-            pixel[0], pixel[1], pixel[2], y);
 
-        /* overwrite the original image with the gray scaled one */
+        /* 元のデータに上書きしてしまう */
         *(buf+cnt)   = y;
         *(buf+cnt+1) = y;
         *(buf+cnt+2) = y;
-        T_D(T_D2, 0x40080200+cnt, buf, info->height*info->width*3);
     }
-    T_D(T_D2, 0x4008f000, buf, info->height*info->width*3);
 
     return 0;
 }
@@ -461,30 +423,42 @@ static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info)
     int col;
     int ret;
 
+    /* 画像情報を出力 */
     fputs("P6\n", opr->outfile);
     fprintf(opr->outfile, "%d %d\n%d\n", info->width, info->height, info->depth);
 
     int cnt = 0;
     for (row=0; row < info->height; row++)
     {
-        /* gray scale data has same RGB value,
-         * so we can reversely read each pixel */
+        /* 各行について右のピクセルからたどって出力していく */
         for (col=info->width; col > 0; )
         {
             col--;
             ret = fwrite(buf+row*info->width*3+col*3, 1, 3, opr->outfile);
             if (ret <= 0)
             {
-                T_M(T_E, 0xc0090400, "Cannot write to an outputfile %s: %s.\n",
+                fprintf(stderr, "Cannot write to an outputfile %s: %s.\n",
                     opr->out_filename, strerror(errno));
                 return 0xc0090400;
             }
             cnt += ret;
         }
     }
-    T_M(T_D1, 0x40090f00, "write cnt=%d\n", cnt);
 
     return 0;
+}
+
+/*----------------------------------------------------------------------*/
+static int is_number(char *num_str)
+{
+    for (; *num_str != '\0'; num_str++)
+    {
+        if (!isdigit((unsigned char)*num_str))
+        {
+            return(0);
+        }
+    }
+    return(1);
 }
 
 /* end of final.c */
