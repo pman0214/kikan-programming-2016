@@ -24,6 +24,15 @@
 #include "trace.h"
 
 /*======================================================================
+ * definitions, macros
+ *======================================================================*/
+#define MAX_HEIGHT      1024
+#define MAX_WIDTH       768
+#define MAX_DEPTH       255
+
+#define BLOCK_SIZE      1024    /**< file read block size */
+
+/*======================================================================
  * typedefs, structures
  *======================================================================*/
 typedef unsigned char uint8_t;
@@ -80,6 +89,8 @@ int main(int argc, char *argv[])
     opr_t opr;                  /* operation parameters */
     int   ret;                  /* return value handler */
     img_info_t in_img;          /* input image info */
+    long byte_cnt;
+    char img_data[MAX_HEIGHT*MAX_WIDTH*3];
 
     /* set a default trace level to ERROR */
     T_init(T_E);
@@ -92,7 +103,7 @@ int main(int argc, char *argv[])
     ret = arg_handler(argc, argv, &opr);
     if (ret < 0)
     {
-        return 0x80010010;
+        return ret;
     }
 
     ret = global_init(&opr);
@@ -112,6 +123,35 @@ int main(int argc, char *argv[])
     {
         global_deinit(&opr);
         return -1;
+    }
+    /* check image size and depth */
+    if ( (in_img.height > MAX_HEIGHT) ||
+         (in_img.width  > MAX_WIDTH) ||
+         (in_img.depth  > MAX_DEPTH) )
+    {
+        T_M(T_E, 0x80010200, "Image size %dx%d, depth=%d is over range.\n",
+            in_img.height, in_img.width, in_img.depth);
+        global_deinit(&opr);
+        return 0x80010200;
+    }
+
+    /* read image data */
+    byte_cnt = 0;
+    while (byte_cnt < MAX_HEIGHT*MAX_WIDTH*3)
+    {
+        /* read 3-byte (RGB-byte) blocks */
+        ret = fread(img_data+byte_cnt, 3, BLOCK_SIZE, opr.infile);
+        T_M(T_D1, 0x00010310, "%02x %02x %02x\n",
+            *(img_data+byte_cnt),
+            *(img_data+byte_cnt+1),
+            *(img_data+byte_cnt+2)
+            );
+        if (ret <= 0)
+        {
+            break;
+        }
+        byte_cnt += ret;
+        T_M(T_D1, 0x00010320, "byte_cnt=%d\n", byte_cnt);
     }
 
     /*----------------------------------------------------------------------*/
