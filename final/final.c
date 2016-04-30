@@ -80,6 +80,7 @@ static int load_img_info(FILE *imgfile, img_info_t *info);
 static int split_words(char *line, char *words[], int words_len);
 static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info);
 static int gray_convert(unsigned char *buf, img_info_t *info);
+static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info);
 
 /*======================================================================
  * functions
@@ -143,6 +144,20 @@ int main(int argc, char *argv[])
     }
 
     /* convert to gray scaled image */
+    ret = gray_convert(img_data, &in_img);
+    if (ret < 0)
+    {
+        global_deinit(&opr);
+        return ret;
+    }
+
+    /* save to an output file */
+    ret = write_img_flipped(img_data, &opr, &in_img);
+    if (ret < 0)
+    {
+        global_deinit(&opr);
+        return ret;
+    }
 
     /*----------------------------------------------------------------------*/
 
@@ -436,6 +451,15 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
         *(buf+cnt+1) = y;
         *(buf+cnt+2) = y;
     }
+
+    return 0;
+}
+
+/*----------------------------------------------------------------------*/
+static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info)
+{
+    fputs("P6", opr->outfile);
+    fprintf(opr->outfile, "%d %d\n%d\n", info->width, info->height, info->depth);
 
     return 0;
 }
