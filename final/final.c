@@ -30,8 +30,6 @@
 #define MAX_WIDTH       768
 #define MAX_DEPTH       255
 
-#define BLOCK_SIZE      1024    /**< file read block size */
-
 /*======================================================================
  * typedefs, structures
  *======================================================================*/
@@ -80,6 +78,8 @@ static void global_deinit(opr_t *opr);
 static void usage(void);
 static int load_img_info(FILE *imgfile, img_info_t *info);
 static int split_words(char *line, char *words[], int words_len);
+static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info);
+static int gray_convert(unsigned char *buf, img_info_t *info);
 
 /*======================================================================
  * functions
@@ -89,8 +89,7 @@ int main(int argc, char *argv[])
     opr_t opr;                  /* operation parameters */
     int   ret;                  /* return value handler */
     img_info_t in_img;          /* input image info */
-    long byte_cnt;
-    char img_data[MAX_HEIGHT*MAX_WIDTH*3];
+    unsigned char img_data[MAX_HEIGHT*MAX_WIDTH*3];
 
     /* set a default trace level to ERROR */
     T_init(T_E);
@@ -122,7 +121,7 @@ int main(int argc, char *argv[])
     if (ret < 0)
     {
         global_deinit(&opr);
-        return -1;
+        return ret;
     }
     /* check image size and depth */
     if ( (in_img.height > MAX_HEIGHT) ||
@@ -136,23 +135,14 @@ int main(int argc, char *argv[])
     }
 
     /* read image data */
-    byte_cnt = 0;
-    while (byte_cnt < MAX_HEIGHT*MAX_WIDTH*3)
+    ret = load_img(img_data, &opr, &in_img);
+    if (ret < 0)
     {
-        /* read 3-byte (RGB-byte) blocks */
-        ret = fread(img_data+byte_cnt, 3, BLOCK_SIZE, opr.infile);
-        T_M(T_D1, 0x00010310, "%02x %02x %02x\n",
-            *(img_data+byte_cnt),
-            *(img_data+byte_cnt+1),
-            *(img_data+byte_cnt+2)
-            );
-        if (ret <= 0)
-        {
-            break;
-        }
-        byte_cnt += ret;
-        T_M(T_D1, 0x00010320, "byte_cnt=%d\n", byte_cnt);
+        global_deinit(&opr);
+        return ret;
     }
+
+    /* convert to gray scaled image */
 
     /*----------------------------------------------------------------------*/
 
@@ -392,6 +382,62 @@ static int split_words(char *line, char *words[], int words_len)
     words[cnt++] = start;
 
     return cnt;
+}
+
+/*----------------------------------------------------------------------*/
+static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info)
+{
+    long cnt;
+    long max;
+    int ret;
+
+    max = info->height * info->width * 3;
+    while (cnt < max)
+    {
+        /* read 3-byte (RGB-byte) blocks */
+        ret = fread(buf+cnt, 1, info->width*3, opr->infile);
+        if (ret <= 0)
+        {
+            T_M(T_E, 0xc0070100, "Invalid image file format.\n");
+            return 0xc0070100;
+        }
+        T_D(T_D2, 0x40070200, buf+cnt, info->width*3);
+        cnt += ret;
+        T_M(T_D2, 0x40070210, "cnt=%d, buf+cnt=%p\n",
+            cnt, buf+cnt);
+    }
+    T_D(T_D1, 0x40070300, buf, max);
+    T_M(T_D1, 0x40070310, "cnt=%d, buf=%p\n",
+        cnt, buf);
+
+    return 0;
+}
+
+/*----------------------------------------------------------------------*/
+static int gray_convert(unsigned char *buf, img_info_t *info)
+{
+    unsigned char pixel[3];     /* rgb data */
+    unsigned char y;
+    long cnt;
+    long max;
+
+    max = info->height * info->width * 3;
+    for (cnt=0; cnt < max; cnt+=3)
+    {
+        /* read r, g, b */
+        memcpy(pixel, buf+cnt, 3);
+        /* calculate Y = 0.299R + 0.587G + 0.114B  */
+        y = 0.299 * pixel[0] +
+            0.587 * pixel[1] +
+            0.114 * pixel[2];
+
+        /* overwrite the original image with the gray scaled one */
+        *(buf+cnt)   = y;
+        *(buf+cnt+1) = y;
+        *(buf+cnt+2) = y;
+    }
+
+    return 0;
 }
 
 /* end of final.c */
