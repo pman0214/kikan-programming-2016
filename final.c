@@ -149,6 +149,14 @@ int main(int argc, char *argv[])
 /*======================================================================
  * private functions
  *======================================================================*/
+/**
+ * @brief       Argument handler.
+ * @param[in]   argc Number of arguments.
+ * @param[in]   argv Arguments.
+ * @param[out]  opr Operation parameters.
+ * @return      Returns 0 on success.
+ *              Returns minus value on any error.
+ */
 static int arg_handler(int argc, char *argv[], opr_t *opr)
 {
     int ret;
@@ -202,6 +210,12 @@ static int arg_handler(int argc, char *argv[], opr_t *opr)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Initialization process.
+ * @param[in]   opr Operation parameters.
+ * @return      Returns 0 on success.
+ *              Returns minus value on any error.
+ */
 static int global_init(opr_t *opr)
 {
     /* 入力ファイルを開く */
@@ -222,6 +236,10 @@ static int global_init(opr_t *opr)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       De-initialization process.
+ * @param[in]   opr Operation parameters.
+ */
 static void global_deinit(opr_t *opr)
 {
     if (opr->infile)
@@ -240,6 +258,9 @@ static void global_deinit(opr_t *opr)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Print usage.
+ */
 static void usage(void)
 {
     puts("Usage: final [-h] <in_file> <out_file>");
@@ -250,6 +271,13 @@ static void usage(void)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Read image information from image file.
+ * @param[in]   imgfile File pointer to image file.
+ * @param[out]  info Image information struct.
+ * @return      Returns 0 on success.
+ *              Returns minus value on any error.
+ */
 static int load_img_info(FILE *imgfile, img_info_t *info)
 {
     char buf[10];
@@ -338,6 +366,14 @@ static int load_img_info(FILE *imgfile, img_info_t *info)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Split words with blanks.
+ * @param[in]   line String including a line to process.
+ * @param[out]  words Pointer array to store word strings.
+ * @param[in]   words_len Length of word string array.
+ * @return      Returns number of words on success.
+ *              Returns minus value on any error.
+ */
 static int split_words(char *line, char *words[], int words_len)
 {
     int cnt;
@@ -365,6 +401,14 @@ static int split_words(char *line, char *words[], int words_len)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Load image binary data.
+ * @param[out]  buf Image data buffer.
+ * @param[in]   opr Operation parameters.
+ * @param[in]   info Image information struct.
+ * @return      Returns 0 on success.
+ *              Returns minus value on any error.
+ */
 static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info)
 {
     long cnt;
@@ -389,6 +433,13 @@ static int load_img(unsigned char *buf, opr_t *opr, img_info_t *info)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Convert image to the gray scaled image.
+ * @param[in,out] buf Image data buffer.
+ * @param[in]   info Image information struct.
+ * @return      Returns 0 on success.
+ *              Returns minus value on any error.
+ */
 static int gray_convert(unsigned char *buf, img_info_t *info)
 {
     unsigned char pixel[3];     /* rgb data */
@@ -416,6 +467,14 @@ static int gray_convert(unsigned char *buf, img_info_t *info)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Write image data to file with horizontal flipped operation.
+ * @param[in]   buf Image data buffer.
+ * @param[in]   opr Operation parameters.
+ * @param[in]   info Image information struct.
+ * @return      Returns 0 on success.
+ *              Returns minus value on any error.
+ */
 static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info)
 {
     int row;
@@ -448,6 +507,11 @@ static int write_img_flipped(unsigned char *buf, opr_t *opr, img_info_t *info)
 }
 
 /*----------------------------------------------------------------------*/
+/**
+ * @brief       Check if string is numerical characters.
+ * @param[in]   num_str String to be checked.
+ * @return      Returns 1 if the string is numerical, otherwise returns 0.
+ */
 static int is_number(char *num_str)
 {
     for (; *num_str != '\0'; num_str++)
