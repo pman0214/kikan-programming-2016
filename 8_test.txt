@@ -1,0 +1,25 @@
+I just called to say I love you.
+I Just Called To Say I Love You.
+
+no matter what I do, you never get lost.
+No Matter What I Do, You Never Get Lost.
+
+no matter what you say, I have to go.
+No Matter What You Say, I Have To Go.
+
+Washington, D.C.
+Washington, D.C.
+
+
+I recommend Keya beach, which is located at the west of Itoshima peninsula.  The beach might be filled with many kids in summer.
+
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 12345678
+
+
+現状だと127文字までしかダメなようです。修正してみてください。fgetsの挙動がヒントです。
+
+isupper( )を使うときはctype.hをincludeしましょう！ってisupperをググったときに書いてませんでした？
+
+toupper( )を使うときはctype.hをincludeしましょう！ってtoupperをググったときに書いてませんでした？
+
+問題が良くなかったかもしれませんが、文頭は単語の先頭なので大文字にしてください。
