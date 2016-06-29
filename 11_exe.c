@@ -7,16 +7,13 @@ int main(void)
     long f2 = 1;
     long tmp;
 
-    /* 個数の入力 */
+    /* フィボナッチ数を表示する上限の入力 */
     printf("いくつ以下のフィボナッチ数？: ");
     scanf("%ld", &max_num);
 
-    /* 特別な場合 */
-    switch (max_num)
+    /* マイナスは何もしないで終了 */
+    if (max_num < 0)
     {
-    case 0:
-        return 0;
-    case 1:
         return 0;
     }
 
