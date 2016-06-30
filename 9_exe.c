@@ -1,38 +1,48 @@
 #include <stdio.h>
+#define MAT_SIZE        3
 
 static int print_matrix(const int *mat);
 
 int main(void)
 {
-    int a[3][3];
-    int b[3][3];
-    int sum[3][3];              /* 和 */
-    int sub[3][3];              /* 差 */
-    int mul[3][3];              /* 積 */
-    int i, j;
+    int a[MAT_SIZE][MAT_SIZE];
+    int b[MAT_SIZE][MAT_SIZE];
+    int sum[MAT_SIZE][MAT_SIZE]; /* 和 */
+    int sub[MAT_SIZE][MAT_SIZE]; /* 差 */
+    int mul[MAT_SIZE][MAT_SIZE]; /* 積 */
+    int i, j, k;
 
     /* 入力 */
     printf("行列A:\n");
-    scanf("%d %d %d", &a[0][0], &a[0][1], &a[0][2]);
-    scanf("%d %d %d", &a[1][0], &a[1][1], &a[1][2]);
-    scanf("%d %d %d", &a[2][0], &a[2][1], &a[2][2]);
+    for (i=0; i < MAT_SIZE; i++)
+    {
+        for (j=0; j < MAT_SIZE; j++)
+        {
+            scanf("%d", &a[i][j]);
+        }
+    }
     printf("行列B:\n");
-    scanf("%d %d %d", &b[0][0], &b[0][1], &b[0][2]);
-    scanf("%d %d %d", &b[1][0], &b[1][1], &b[1][2]);
-    scanf("%d %d %d", &b[2][0], &b[2][1], &b[2][2]);
+    for (i=0; i < MAT_SIZE; i++)
+    {
+        for (j=0; j < MAT_SIZE; j++)
+        {
+            scanf("%d", &b[i][j]);
+        }
+    }
 
     /* ループして計算 */
-    for (i=0; i<3; i++)
+    for (i=0; i < MAT_SIZE; i++)
     {
-        for (j=0; j<3; j++)
+        for (j=0; j < MAT_SIZE; j++)
         {
             sum[i][j] = a[i][j] + b[i][j];
             sub[i][j] = a[i][j] - b[i][j];
             /* 積は少し注意が必要 */
-            mul[i][j] =
-                a[i][0] * b[0][j] +
-                a[i][1] * b[1][j] +
-                a[i][2] * b[2][j];
+            mul[i][j] = 0;
+            for (k=0; k < MAT_SIZE; k++)
+            {
+                mul[i][j] += a[i][k] * b[k][j];
+            }
         }
     }
     printf("\n");
@@ -56,11 +66,11 @@ int print_matrix(const int *mat)
     int i;
     int j;
 
-    for (i=0; i<3; i++)
+    for (i=0; i < MAT_SIZE; i++)
     {
-        for (j=0; j<3; j++)
+        for (j=0; j < MAT_SIZE; j++)
         {
-            printf(" %5d", *(mat+3*i+j));
+            printf(" %6d", *(mat+MAT_SIZE*i+j));
         }
         printf("\n");
     }
