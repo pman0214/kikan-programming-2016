@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #define MAX_PEOPLE      30
 #define SUBS            4
@@ -12,6 +13,9 @@ int main(void)
     int sort_max;
     int ret;
 
+    /* 初期化 */
+    memset(scores, 0, sizeof(scores));
+
     /*======================================================================
      * 成績入力
      */
@@ -19,22 +23,22 @@ int main(void)
     for (num_people=0; num_people < MAX_PEOPLE; num_people++)
     {
         scores[num_people][0] = num_people+1;
-        ret = scanf("%d,%d,%d,%d",
-                    &scores[num_people][2],
-                    &scores[num_people][3],
-                    &scores[num_people][4],
-                    &scores[num_people][5]
-            );
+        ret = scanf("%d", &scores[num_people][2]);
+        for (cnt=1; cnt < SUBS; cnt++)
+        {
+            ret += scanf(",%d", &scores[num_people][cnt+2]);
+        }
+        /* 規定数だけ入力がなかったら終了（.以外でも終了しちゃうけどOKとする） */
         if (ret < SUBS)
         {
             break;
         }
         /* 合計を計算 */
-        scores[num_people][1] =
-            scores[num_people][2]
-            + scores[num_people][3]
-            + scores[num_people][4]
-            + scores[num_people][5];
+        scores[num_people][1] = 0;
+        for (cnt=2; cnt < SUBS+2; cnt++)
+        {
+            scores[num_people][1] += scores[num_people][cnt];
+        }
     }
 
     /*======================================================================
@@ -50,24 +54,9 @@ int main(void)
             if (scores[cnt][1] < scores[cnt+1][1])
             {
                 /* 入れ替え */
-                swap[0] = scores[cnt][0];
-                swap[1] = scores[cnt][1];
-                swap[2] = scores[cnt][2];
-                swap[3] = scores[cnt][3];
-                swap[4] = scores[cnt][4];
-                swap[5] = scores[cnt][5];
-                scores[cnt][0] = scores[cnt+1][0];
-                scores[cnt][1] = scores[cnt+1][1];
-                scores[cnt][2] = scores[cnt+1][2];
-                scores[cnt][3] = scores[cnt+1][3];
-                scores[cnt][4] = scores[cnt+1][4];
-                scores[cnt][5] = scores[cnt+1][5];
-                scores[cnt+1][0] = swap[0];
-                scores[cnt+1][1] = swap[1];
-                scores[cnt+1][2] = swap[2];
-                scores[cnt+1][3] = swap[3];
-                scores[cnt+1][4] = swap[4];
-                scores[cnt+1][5] = swap[5];
+                memcpy(swap,              &scores[cnt][0],   sizeof(swap));
+                memcpy(&scores[cnt][0],   &scores[cnt+1][0], sizeof(scores[cnt]));
+                memcpy(&scores[cnt+1][0], swap,              sizeof(scores[cnt+1]));
             }
         }
     }
