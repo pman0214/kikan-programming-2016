@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <string.h>
+#include <ctype.h>
 
 #define MAX_SENTENCE    512     /* 英文の最大長 */
 
@@ -48,15 +49,11 @@ int main(void)
             if ( (strncmp(words[cnt], "we", 2) == 0) ||
                  (strncmp(words[cnt], "We", 2) == 0) )
             {
-                /* 次の文字が'\0', ''', ',', '.', '!', '?'の場合は単語終了と判定 */
-                switch (words[cnt][2])
+                /* 次の文字が\0または記号の場合は単語終了と判定 */
+                if ((words[cnt][2] == '\0') ||
+                    ispunct(words[cnt][2]) ||
+                    isspace(words[cnt][2]))
                 {
-                case '\0':
-                case '\'':
-                case ',':
-                case '.':
-                case '!':
-                case '?':
                     if (words[cnt][0] == 'w')
                     {
                         printf("you");
@@ -66,10 +63,10 @@ int main(void)
                         printf("You");
                     }
                     printf("%s", &words[cnt][2]);
-                    break;
-                default:
+                }
+                else
+                {
                     printf("%s", words[cnt]);
-                    break;
                 }
             }
             else
