@@ -1,8 +1,46 @@
 /* 
  * Copyright (c) 2016, Shigemi Ishida, Kyushu University
  * All rights reserved.
- *
- * DO NOT REDISTRIBUTE THIS PROGRAM NOR A PART OF THIS PROGRAM.
+ * 
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ * 3. Neither the name of the Institute nor the names of its contributors
+ *    may be used to endorse or promote products derived from this software
+ *    without specific prior written permission.
+ * 
+ * THIS SOFTWARE IS PROVIDED BY THE INSTITUTE AND CONTRIBUTORS ``AS IS'' AND
+ * ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+ * ARE DISCLAIMED.  IN NO EVENT SHALL THE INSTITUTE OR CONTRIBUTORS BE LIABLE
+ * FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+ * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+ * SUCH DAMAGE.
+ */
+
+/*
+ * ■仕様
+ * ・PPM画像ファイルを読み込み，グレースケール変換した上で左右を反転さ
+ *   せてファイルに出力する。
+ * ・指定可能な画像ファイルは最大1024x768ピクセルで、色数は256で固定と
+ *   する。
+ * ・入出力ファイル名はコマンドライン引数で指定する。
+ *   - 指定がない場合にはエラーと使い方を表示して終了する。
+ *   - 入出力ファイルが開けない場合はエラーを表示して終了する。
+ * ・「-h」を付けて実行すると使い方を表示して終了する。
+ * ・入力画像ファイルのフォーマットがおかしいときにはエラーを表示して
+ *   終了する。
+ * ・PPM形式の画像にはコメントが複数行あっても無くても良い。
+ * ・エラーは標準エラー出力に表示する。
  */
 
 /**
