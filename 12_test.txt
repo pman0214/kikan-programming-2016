@@ -10,6 +10,12 @@ No. you.
 no. We.
 no. You.
 
+We  have nothing.
+You  have nothing.
+
+We	have nothing.
+You	have nothing.
+
 We need nothing. We are just friends.
 You need nothing. You are just friends.
 
@@ -24,6 +30,12 @@ you!
 
 We bought an ewe.
 You bought an ewe.
+
+(We never know)
+(You never know)
+
+We'll see it.
+You'll see it.
 
 weather information.
 weather information.

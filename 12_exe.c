@@ -15,6 +15,7 @@ int main(void)
     int word_num;                  /* 単語数 */
     char sentence[MAX_SENTENCE+2]; /* 改行コードと終端文字分だけ多めに確保 */
     char *words[MAX_SENTENCE];     /* 単語の先頭を格納するポインタの配列 */
+    char *word_top;                /* 単語の先頭を示すポインタ */
 
     for (;;)
     {
@@ -45,16 +46,24 @@ int main(void)
                 printf(" ");
             }
 
+            word_top = words[cnt];
+            /* 単語の頭の記号は無視してそのまま表示させる */
+            while (ispunct(*word_top))
+            {
+                putchar(*word_top);
+                word_top++;
+            }
+
             /* weまたはWeと一致 */
-            if ( (strncmp(words[cnt], "we", 2) == 0) ||
-                 (strncmp(words[cnt], "We", 2) == 0) )
+            if ( (strncmp(word_top, "we", 2) == 0) ||
+                 (strncmp(word_top, "We", 2) == 0) )
             {
                 /* 次の文字が\0または記号の場合は単語終了と判定 */
-                if ((words[cnt][2] == '\0') ||
-                    ispunct(words[cnt][2]) ||
-                    isspace(words[cnt][2]))
+                if ((*(word_top+2) == '\0') ||
+                    ispunct(*(word_top+2)) ||
+                    isspace(*(word_top+2)))
                 {
-                    if (words[cnt][0] == 'w')
+                    if (*word_top == 'w')
                     {
                         printf("you");
                     }
@@ -62,16 +71,16 @@ int main(void)
                     {
                         printf("You");
                     }
-                    printf("%s", &words[cnt][2]);
+                    printf("%s", word_top+2);
                 }
                 else
                 {
-                    printf("%s", words[cnt]);
+                    printf("%s", word_top);
                 }
             }
             else
             {
-                printf("%s", words[cnt]);
+                printf("%s", word_top);
             }
         }
         puts("");
