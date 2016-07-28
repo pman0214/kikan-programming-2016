@@ -51,8 +51,14 @@ int main(void)
     {
         /* 1行読み込み */
         ret = read_line(sentence, MAX_SENTENCE+2);
-        if (ret != 0)
+        if (ret == -2)
         {
+            /* 長すぎる場合は無視 */
+            continue;
+        }
+        else if (ret != 0)
+        {
+            /* その他（エラー、終了条件を満たした）の場合は終了 */
             break;
         }
 
@@ -150,7 +156,15 @@ static int read_line(char *line, int max_len)
         fprintf(stderr, "英文が長すぎます\n");
 
         /* バッファに残っている分を読み捨てる */
-        fgets(line, max_len, stdin);
+        while (!pos_nl)
+        {
+            read_status = fgets(line, max_len, stdin);
+            if (!read_status)
+            {
+                break;
+            }
+            pos_nl = strchr(line, '\n');
+        }
 
         return -2;
     }
