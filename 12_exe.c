@@ -46,6 +46,7 @@ int main(void)
     char *words[MAX_SENTENCE];     /* 単語の先頭を格納するポインタの配列 */
     char *word_top;                /* 単語の先頭を示すポインタ */
 
+    /* 無限ループ */
     for (;;)
     {
         /* 1行読み込み */
