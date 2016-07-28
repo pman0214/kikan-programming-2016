@@ -1,0 +1,52 @@
+we never give you our money.
+you never give you our money.
+
+We never give you our money.
+You never give you our money.
+
+No. we.
+No. you.
+
+no. We.
+no. You.
+
+We need nothing. We are just friends.
+You need nothing. You are just friends.
+
+we?
+you?
+
+We!
+You!
+
+we!
+you!
+
+We bought an ewe.
+You bought an ewe.
+
+weather information.
+weather information.
+
+How's the weather?
+How's the weather?
+
+We, lab members, are pleased to be here.
+You, lab members, are pleased to be here.
+
+You (and we) are friends.
+You (and you) are friends.
+
+This is a test sentence.
+This is a test sentence.
+
+123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789 123456789we.
+
+
+Enterが入力されるまで繰り返すようにしてください。
+
+いくつかダメなパターンがあるようです。単語の区切りはispunct()などで判定すると良いです。
+
+weで終わる単語があるとダメなようです。
+
+512文字だと1文字消えてしまいます。
