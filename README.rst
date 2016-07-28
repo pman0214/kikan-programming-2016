@@ -7,11 +7,12 @@
 概要
 ====
 
-基幹教育の「プログラミング演習」の回答のサンプルです。
+2016年度 木曜1限「プログラミング演習」の回答のサンプルです。
 
 Copyright, License
 ==================
 
 Copyright (c) 2016, Shigemi Ishida, Kyushu University.
 
-**DO NOT REDISTRIBUTE THIS PROGRAM NOR A PART OF THIS PROGRAM.**
+These source codes are released under the BSD 3-clause license.
+See ``LICENSE``.
