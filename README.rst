@@ -1,8 +1,8 @@
 .. -*- coding: utf-8; -*-
 
-============================================
- 2016年度 木曜1限 プログラミング演習 回答例
-============================================
+==============================================================
+ 九州大学 基幹教育 2016年度 木曜1限 プログラミング演習 回答例
+==============================================================
 
 概要
 ====
@@ -33,3 +33,5 @@ Copyright (c) 2016, Shigemi Ishida, Kyushu University.
 
 These source codes are released under the BSD 3-clause license.
 See ``LICENSE``.
+
+Image files, i.e., ``yufuin.ppm`` and ``nanki_shirahama.ppm``, are distributed under `CC0 license <https://creativecommons.org/publicdomain/zero/1.0/deed>`_.
