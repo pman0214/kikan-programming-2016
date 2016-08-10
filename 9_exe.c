@@ -90,7 +90,7 @@ int main(void)
     return 0;
 }
 
-int print_matrix(const int *mat)
+static int print_matrix(const int *mat)
 {
     int i;
     int j;
